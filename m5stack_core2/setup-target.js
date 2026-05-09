@@ -40,6 +40,11 @@ const INTERNAL_I2C_IO = Object.freeze({
 	clock: 22
 });
 const ACCELERATION_SCALER = 1 / 9.80665;
+const IMU_ADDRESS = 0x68;
+const BMI270_CHIP_ID_ADDR = 0x00;
+const BMI270_CHIP_ID = 0x24;
+const MPU6886_WHO_AM_I_ADDR = 0x75;
+const MPU6886_WHO_AM_I = 0x19;
 
 const state = {
   handleRotation: nop,
@@ -85,16 +90,27 @@ class Core2BMI270 extends BMI270 {
 }
 
 function createAccelerometerGyro() {
-	try {
+	if (MPU6886_WHO_AM_I === readIMURegister(MPU6886_WHO_AM_I_ADDR))
 		return new MPU6886(INTERNAL_I2C);
-	}
-	catch (e) {
-	}
 
-	try {
+	if (BMI270_CHIP_ID === readIMURegister(BMI270_CHIP_ID_ADDR))
 		return new Core2BMI270;
+}
+
+function readIMURegister(register) {
+	let io;
+	try {
+		io = new EmbeddedSMBus({
+			...INTERNAL_I2C_IO,
+			hz: 400_000,
+			address: IMU_ADDRESS
+		});
+		return io.readUint8(register);
 	}
 	catch (e) {
+	}
+	finally {
+		io?.close();
 	}
 }
 

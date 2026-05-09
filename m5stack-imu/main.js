@@ -22,6 +22,8 @@ let pixelsOut = new ILI9341({});
 const width = pixelsOut.width;
 const height = pixelsOut.height;
 const GYRO_SCALER = 0.002;
+const MAG_SCALER = 0.002;
+const hasMagnetometer = "magnetometer" in globalThis;
 
 let render = new Poco(pixelsOut);
 let font = parseBMF(new Resource("OpenSans-Semibold-18.bf4"));
@@ -55,13 +57,23 @@ gyro.onreading = function(values){
 	z *= GYRO_SCALER;
 	onReading({x,y,z}, "g");
 }
+
+if (hasMagnetometer) {
+	globalThis.magnetometer.onreading = function(values){
+		let {x, y, z} = values;
+		x = x * -1 * MAG_SCALER;
+		y *= MAG_SCALER;
+		z *= MAG_SCALER;
+		onReading({x,y,z}, "m");
+	}
+}
+
 accelerometer.start(17);
 
 button.a.onChanged = function(){
 	let value = button.a.read();
 	if (value) {
-		accelerometer.stop();
-		gyro.stop();
+		stopSensors();
 		accelerometer.start(17);
 	}
 }
@@ -69,10 +81,26 @@ button.a.onChanged = function(){
 button.b.onChanged = function(){
 	let value = button.b.read();
 	if (value){
-		accelerometer.stop();
-		gyro.stop();
+		stopSensors();
 		gyro.start(17);
 	}
+}
+
+if (hasMagnetometer) {
+	button.c.onChanged = function () {
+		let value = button.c.read();
+		if (value) {
+			stopSensors();
+			globalThis.magnetometer.start(50);
+		}
+	}
+}
+
+function stopSensors() {
+	accelerometer.stop();
+	gyro.stop();
+	if (hasMagnetometer)
+		globalThis.magnetometer.stop();
 }
 
 function onReading(values, labelPrefix){
