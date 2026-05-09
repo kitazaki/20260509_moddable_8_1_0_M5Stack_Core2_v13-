@@ -1,4 +1,4 @@
-# 20260509_moddable_8_1_0_M5Stack_Core2_v13-
+# 20260509_moddable_8_1_0_M5Stack_Core2_v13
 
 Moddable SDK 8.1.0でIMUセンサーデバイスBMI270がサポートされました。
 
